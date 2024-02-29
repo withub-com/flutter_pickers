@@ -389,6 +389,7 @@ class _PickerState extends State<_PickerContentView> {
         _setMonth();
         break;
       case DateType.Day:
+        _setDay();
         break;
       case DateType.Hour:
         _setHour();
@@ -532,6 +533,57 @@ class _PickerState extends State<_PickerContentView> {
       setState(() {
         _dateTimeData.day = resultDay;
         scrollCtrl[DateType.Day]?.jumpToItem(jumpToIndexDay);
+
+        /// FIX:https://github.com/flutter/flutter/issues/22999
+        pickerItemHeight =
+            _pickerStyle.pickerItemHeight - Random().nextDouble() / 100000000;
+      });
+    }
+  }
+
+   void _setDay() {
+    // 可能造成 时 list的改变
+    bool updateDay = false;
+    int jumpToIndexDay = 0;
+    // 新的day 数据
+    var resultHourse;
+    if (_dateItemModel.hour) {
+      int beginDay = 0;
+      int endDay = 23;
+      // 限制区域
+      if (intNotEmpty(minDate.hour) || intNotEmpty(maxDate.hour)) {
+        if (_selectData.year == minDate.year &&
+            _selectData.month == minDate.month &&
+            _selectData.day == minDate.day) {
+          beginDay = minDate.hour!;
+        }
+        if (_selectData.year == maxDate.year &&
+            _selectData.month == maxDate.month &&
+            _selectData.day == maxDate.day) {
+          endDay = maxDate.hour!;
+        }
+      }
+
+      resultHourse = TimeUtils.calcHour(begin: beginDay, end: endDay);
+
+
+      if (!listEquals(_dateTimeData.hour, resultHourse)) {
+        //可能 选中的年 月份 由于设置了新数据后没有了
+        // 小于不用考虑 会进else
+        if (_selectData.hour! > resultHourse.last) {
+          jumpToIndexDay = resultHourse.length - 1;
+        } else {
+          jumpToIndexDay = resultHourse.indexOf(_selectData.hour);
+        }
+        jumpToIndexDay = jumpToIndexDay < 0 ? 0 : jumpToIndexDay;
+        _selectData.hour = resultHourse[jumpToIndexDay];
+        updateDay = true;
+      }
+    }
+    if (updateDay) {
+      setState(() {
+        _dateTimeData.hour = resultHourse;
+        scrollCtrl[DateType.Hour]?.jumpToItem(jumpToIndexDay);
 
         /// FIX:https://github.com/flutter/flutter/issues/22999
         pickerItemHeight =
